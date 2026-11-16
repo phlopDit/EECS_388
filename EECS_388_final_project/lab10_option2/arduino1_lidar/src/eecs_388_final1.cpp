@@ -69,14 +69,22 @@ while( 1 )
 
             dist = distL | (distH << 8);// Combine into one 16 byte value
 
-            ser_printf("%d", dist);// Report distance to serial monitor
+            if (dist <= 60) {
+                ser_write('X');
+            } else if (dist > 60 && dist <= 100) {
+                ser_write('R');
+            } else if (dist > 100 && dist <= 200) {
+                ser_write('Y');
+            } else {
+                ser_write('G');
+            }
 
             // Use the remaining data bytes
             for(int i = 0; i < 5; i++){
                 ser_read();
             }
 
-            ser_write(dist);
+            // ser_write(dist);
 
         }
     }

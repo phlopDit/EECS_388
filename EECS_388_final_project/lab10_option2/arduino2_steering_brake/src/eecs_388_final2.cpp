@@ -28,6 +28,7 @@ static void steering(int pos);
 volatile uint8_t interrupt_count = 0;
 volatile uint8_t is_red = 1;
 volatile uint8_t led_state = 0;
+volatile char state = 'X';
 
 /******************************************************************************
  *   Function: auto_brake() - Auto Brake
@@ -41,43 +42,63 @@ static void auto_brake()
   // Task-2: 
   // Your code goes here (Use Lab 2 & 4 for reference)
   // Check the project document to understand the task
-  uint16_t dist = ser_read();
 
-  ser_printf("%d", dist);
-
-  interrupt_count++;
-
-  if(interrupt_count == 10){
-    interrupt_count = 0;
-    is_red = !is_red;
+  if (UCSR0A & (1 << RXC0)) {
+    state = ser_read();
   }
 
-  led_state = !led_state;
-
-  if(dist <= 60){//Must Stop: Flashing Red LED
-    if(is_red){
+  switch(state) {
+    case 'X':
+      if(is_red){
+        gpio_write(GPIO_13, ON);
+        gpio_write(GPIO_12, OFF);
+        gpio_write(GPIO_11, OFF);
+      } else {
+        gpio_write(GPIO_13, OFF);
+        gpio_write(GPIO_12, OFF);
+        gpio_write(GPIO_11, OFF);
+      }
+    case 'R':
       gpio_write(GPIO_13, ON);
       gpio_write(GPIO_12, OFF);
       gpio_write(GPIO_11, OFF);
-    } else {
-      gpio_write(GPIO_13, OFF);
-      gpio_write(GPIO_12, OFF);
+      break;
+    case 'Y':
+      gpio_write(GPIO_13, ON);
+      gpio_write(GPIO_12, ON);
       gpio_write(GPIO_11, OFF);
-    }
+      break;
+    case 'G':
+      gpio_write(GPIO_13, OFF);
+      gpio_write(GPIO_12, ON);
+      gpio_write(GPIO_11, OFF);
+      break;
+  }
+
+  // if(s){//Must Stop: Flashing Red LED
+  //   if(is_red){
+  //     gpio_write(GPIO_13, ON);
+  //     gpio_write(GPIO_12, OFF);
+  //     gpio_write(GPIO_11, OFF);
+  //   } else {
+  //     gpio_write(GPIO_13, OFF);
+  //     gpio_write(GPIO_12, OFF);
+  //     gpio_write(GPIO_11, OFF);
+  //   }
     
-  }else if(dist > 60 and dist <= 100){//Very Close: Red LED
-    gpio_write(GPIO_13, ON);
-    gpio_write(GPIO_12, OFF);
-    gpio_write(GPIO_11, OFF);
-  }else if(dist > 100 && dist <= 200){//Close: Yellow LED
-    gpio_write(GPIO_13, ON);
-    gpio_write(GPIO_12, ON);
-    gpio_write(GPIO_11, OFF);
-  }else{//Safe distance: Green LED
-    gpio_write(GPIO_13, OFF);
-    gpio_write(GPIO_12, ON);
-    gpio_write(GPIO_11, OFF);
-  }  
+  // }else if(dist > 60 and dist <= 100){//Very Close: Red LED
+  //   gpio_write(GPIO_13, ON);
+  //   gpio_write(GPIO_12, OFF);
+  //   gpio_write(GPIO_11, OFF);
+  // }else if(dist > 100 && dist <= 200){//Close: Yellow LED
+  //   gpio_write(GPIO_13, ON);
+  //   gpio_write(GPIO_12, ON);
+  //   gpio_write(GPIO_11, OFF);
+  // }else{//Safe distance: Green LED
+  //   gpio_write(GPIO_13, OFF);
+  //   gpio_write(GPIO_12, ON);
+  //   gpio_write(GPIO_11, OFF);
+  // }  
 }
 
 
@@ -118,7 +139,7 @@ gpio_mode(GPIO_11, GPIO_OUTPUT); //BLUE
 gpio_mode(GPIO_6, GPIO_OUTPUT);
 
 enable_timer_interrupt();
-set_cycles(25000);
+set_cycles(12499);
 
 enable_interrupt();
 
@@ -165,4 +186,9 @@ for (int i = 0; i < 10; i++)
   // Remember to comment out the if-else statement above!
   // steering(angle);
   }
+}
+
+ISR(TIMER1_COMPA_vect)
+{
+    is_red = !is_red;
 }

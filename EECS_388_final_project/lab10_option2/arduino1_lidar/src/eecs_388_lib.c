@@ -221,6 +221,6 @@ void ser_write(const char c) {
     while (!(UCSR0A & (1 << UDRE0))) {
         // Wait until transmit buffer is empty
     }
-    UDR0 = dist; // Load data into transmit register
+    UDR0 = c; // Load data into transmit register
 }
 
