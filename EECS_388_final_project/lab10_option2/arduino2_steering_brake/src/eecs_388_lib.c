@@ -397,16 +397,15 @@ void enable_timer_interrupt(void) {
 	//In TCCR1B: Setup CTC mode, set the prescaler you will use with set_cycles() compare value
 	TCCR1B |= (1 << WGM12) | (1 << CS11) | (1 << CS10);
 	//In TIMSK1: Set the OCIE1A bit to enable the timer interrupt.
-	TIMSK1 |= (1 << OCIE1A);
-	
-	//TCCR1B = xxx; 	
-	//TIMSK1 |= xxx; 	
+	TIMSK1 |= (1 << OCIE1A) | (1 << OCIE1B);
 }
+	
+
 
 void disable_timer_interrupt(void) {
 	//Task 2.4
 	//In TIMSK1: Clear the OCIE1A bit to disable the timer interrupt.
 	//TIMSK1 &= ~(1 << XXX);  //This will use the complement operator and a bitwise OR operation to clear just the bit specified by XXX
-	TIMSK1 &= ~(1 << OCIE1A);
+	TIMSK1 &= ~(1 << OCIE1A) | (1 << OCIE1B);
 }
 

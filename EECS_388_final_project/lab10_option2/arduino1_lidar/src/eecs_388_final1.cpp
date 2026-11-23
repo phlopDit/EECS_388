@@ -70,21 +70,19 @@ while( 1 )
             dist = distL | (distH << 8);// Combine into one 16 byte value
 
             if (dist <= 60) {
-                ser_write('X');
+                ser_write('X'); // Flashing Red
             } else if (dist > 60 && dist <= 100) {
-                ser_write('R');
+                ser_write('R'); // Solid Red
             } else if (dist > 100 && dist <= 200) {
-                ser_write('Y');
+                ser_write('Y'); // Solid Yellow
             } else {
-                ser_write('G');
+                ser_write('G'); // Solid Green
             }
 
-            // Use the remaining data bytes
+            // Consume remaining data bytes
             for(int i = 0; i < 5; i++){
                 ser_read();
             }
-
-            // ser_write(dist);
 
         }
     }
