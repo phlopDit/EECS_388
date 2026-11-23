@@ -213,30 +213,34 @@ volatile uint8_t angle_index = 0;
 uint8_t angle_values[] = {10, 25, 75, 45, 100, 40, 125, 15, 150, 50, 170};
 volatile uint8_t temp_update = 0;
 
+
 ISR(TIMER1_COMPA_vect) {
   interrupt_steering_count++;
 
+  // Sets 1 second interval between steering angles
   if(interrupt_steering_count == 50){
     interrupt_steering_count = 0;
     angle_index++;
-    if(angle_index == 11){
+    if(angle_index == 11){// Resets the index we use for angle_values[]
       angle_index = 0;
     }
 
     temp_update = 1; // Set to 1 to read a new temperature
   }
 
-  gpio_write(GPIO_6, ON);
+  gpio_write(GPIO_6, ON);// Turns pin 6 ON for high pulse
 }
 
 ISR(TIMER1_COMPB_vect) {
   interrupt_count++;
 
+  // Sets a 100ms interval for flashing red LED
   if (interrupt_count == 5){
     interrupt_count = 0;
     is_red = !is_red;
   }
-  gpio_write(GPIO_6, OFF);
+
+  gpio_write(GPIO_6, OFF);// Turns pin 6 off for low pulse
 }
 
 
@@ -254,14 +258,12 @@ static void auto_brake()
   // Check the project document to understand the task
 
 
-  if (UCSR0A & (1 << RXC0)) {
+  if (UCSR0A & (1 << RXC0)) {// Checks if there is data to read
     state = ser_read();
   }
 
-  ser_printf("%c", state);
-
   switch(state) {
-    case 'X':
+    case 'X':// Flashing red
       if(is_red){
         gpio_write(GPIO_13, ON);
         gpio_write(GPIO_12, OFF);
@@ -272,17 +274,17 @@ static void auto_brake()
         gpio_write(GPIO_11, OFF);
       }
       break;
-    case 'R':
+    case 'R':// Solid red
       gpio_write(GPIO_13, ON);
       gpio_write(GPIO_12, OFF);
       gpio_write(GPIO_11, OFF);
       break;
-    case 'Y':
+    case 'Y':// Solid yellow
       gpio_write(GPIO_13, ON);
       gpio_write(GPIO_12, ON);
       gpio_write(GPIO_11, OFF);
       break;
-    case 'G':
+    case 'G':// Solid green
       gpio_write(GPIO_13, OFF);
       gpio_write(GPIO_12, ON);
       gpio_write(GPIO_11, OFF);
@@ -304,8 +306,10 @@ static void steering(int pos)
     // Your code goes here (Use Lab 05 for reference)
     // Check the project document to understand the task
 
+    // Calculates pulse width
     uint32_t pulse = SERVO_PULSE_MIN + ((uint32_t) pos * (SERVO_PULSE_MAX - SERVO_PULSE_MIN)) / MAX_ANGLE;
 
+    // Calculate timer ticks
     OCR1B = pulse / 4;
 
 }
@@ -320,6 +324,7 @@ static void temp_sensor(){
   int32_t temperature = get_true_temperature(ut);
 
 
+  // Temperature goes above 22C sets the LED to red for a warning
   if(temperature >= 220){
     gpio_write(GPIO_8, ON);
     gpio_write(GPIO_9, OFF);
@@ -353,14 +358,14 @@ gpio_mode(GPIO_11, GPIO_OUTPUT); //BLUE
 //Setup GPIO_6 for PWM output
 gpio_mode(GPIO_6, GPIO_OUTPUT);
 
-gpio_mode(GPIO_8, GPIO_OUTPUT);
-gpio_mode(GPIO_9, GPIO_OUTPUT);
+gpio_mode(GPIO_8, GPIO_OUTPUT); // RED
+gpio_mode(GPIO_9, GPIO_OUTPUT); // GREEN
 
 enable_timer_interrupt();
-set_cycles(4999);
+set_cycles(4999);// Sets the timer period to 20ms
 
-steering(angle_values[0]);
-enable_interrupt();
+steering(angle_values[0]); // Sets initial steering angle to the first value in angle_values[]
+enable_interrupt(); 
 
 i2c_init();
 read_calibration(&calib_data);
